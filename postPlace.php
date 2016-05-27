@@ -1,0 +1,280 @@
+<?php
+    
+error_reporting(0);
+    
+class SimpleImage
+{
+   
+   var $image;
+   var $image_type;
+ 
+   function load($filename) {
+      $image_info = getimagesize($filename);
+      $this->image_type = $image_info[2];
+      if( $this->image_type == IMAGETYPE_JPEG ) {
+         $this->image = imagecreatefromjpeg($filename);
+      } elseif( $this->image_type == IMAGETYPE_GIF ) {
+         $this->image = imagecreatefromgif($filename);
+      } elseif( $this->image_type == IMAGETYPE_PNG ) {
+         $this->image = imagecreatefrompng($filename);
+      }
+   }
+   function save($filename, $image_type=IMAGETYPE_JPEG, $compression=75, $permissions=null) {
+      if( $image_type == IMAGETYPE_JPEG ) {
+         imagejpeg($this->image,$filename,$compression);
+      } elseif( $image_type == IMAGETYPE_GIF ) {
+         imagegif($this->image,$filename);         
+      } elseif( $image_type == IMAGETYPE_PNG ) {
+         imagepng($this->image,$filename);
+      }   
+      if( $permissions != null) {
+         chmod($filename,$permissions);
+      }
+   }
+   function output($image_type=IMAGETYPE_JPEG) {
+      if( $image_type == IMAGETYPE_JPEG ) {
+         imagejpeg($this->image);
+      } elseif( $image_type == IMAGETYPE_GIF ) {
+         imagegif($this->image);         
+      } elseif( $image_type == IMAGETYPE_PNG ) {
+         imagepng($this->image);
+      }   
+   }
+   function getWidth() {
+      return imagesx($this->image);
+   }
+   function getHeight() {
+      return imagesy($this->image);
+   }
+   function resizeToHeight($height) {
+      $ratio = $height / $this->getHeight();
+      $width = $this->getWidth() * $ratio;
+      $this->resize($width,$height);
+   }
+   function resizeToWidth($width) {
+      $ratio = $width / $this->getWidth();
+      $height = $this->getheight() * $ratio;
+      $this->resize($width,$height);
+   }
+   function scale($scale) {
+      $width = $this->getWidth() * $scale/100;
+      $height = $this->getheight() * $scale/100; 
+      $this->resize($width,$height);
+   }
+   function resize($width,$height) {
+      $new_image = imagecreatetruecolor($width, $height);
+      imagecopyresampled($new_image, $this->image, 0, 0, 0, 0, $width, $height, $this->getWidth(), $this->getHeight());
+      $this->image = $new_image;   
+   }      
+}
+
+function postPlace($params=array())
+{
+    header('Content-Type: application/json');
+	global $outputjson;
+	$jsonArray = array();
+	$jsonval = array();
+	$conn = new DBConnection();
+	$mysql = $conn->connect();
+	
+    $FsqId = "";
+    
+    if(isset($_REQUEST['fsqid'])) {
+        $FsqId = $_REQUEST['fsqid'];
+    }
+	
+	if(isset($_REQUEST['placename']))
+	{
+		$placename=str_replace("'","^",trim($_REQUEST['placename'])); 
+		/*if (get_magic_quotes_gpc()) 
+		{$placename= stripslashes($_REQUEST['placename']);}
+		else 
+		{ placename=$_REQUEST['placename'];}
+		*/
+	}
+	if(isset($_REQUEST['city']))
+	{
+		$city=str_replace("'","^",trim($_REQUEST['city'])); 
+		/*if (get_magic_quotes_gpc()) 
+		{$city= stripslashes($_REQUEST['city']);}
+		else 
+		{ $city=$_REQUEST['city'];}
+		*/
+		//$city=$_REQUEST['city'];
+	}
+	if(isset($_REQUEST['address']))
+	{
+		$address=str_replace("'","^",trim($_REQUEST['address'])); 
+		/*if (get_magic_quotes_gpc()) 
+		{$address= stripslashes($_REQUEST['address']);}
+		else 
+		{ $address=$_REQUEST['address'];}
+		*/
+		//$address=$_REQUEST['address'];
+	}
+	if(isset($_REQUEST['userid']))
+	{
+		$userid=$_REQUEST['userid'];
+	}
+	if(isset($_REQUEST['fulladdress']))
+	{
+		$fulladdress=str_replace("'","^",trim($_REQUEST['fulladdress'])); 
+		/*if (get_magic_quotes_gpc()) 
+		{$fulladdress= stripslashes($_REQUEST['fulladdress']);}
+		else 
+		{ $fulladdress=$_REQUEST['fulladdress'];}
+		*/
+		//$fulladdress=$_REQUEST['fulladdress'];
+	}
+	if(isset($_REQUEST['street']))
+	{
+		$street=str_replace("'","^",trim($_REQUEST['street'])); 
+		/*if (get_magic_quotes_gpc()) 
+		{$street= stripslashes($_REQUEST['street']);}
+		else 
+		{ $street=$_REQUEST['street'];}
+		*/
+		
+		//$street=$_REQUEST['street'];
+	}
+	if(isset($_REQUEST['state']))
+	{
+		/*if (get_magic_quotes_gpc()) 
+		{$state= stripslashes($_REQUEST['state']);}
+		else 
+		{ $state=$_REQUEST['state'];}
+		*/
+		$state=str_replace("'","^",trim($_REQUEST['state'])); 
+		//$state=$_REQUEST['state'];
+	}
+	if(isset($_REQUEST['country']))
+	{
+		/*if (get_magic_quotes_gpc()) 
+		{$country= stripslashes($_REQUEST['country']);}
+		else 
+		{ $country=$_REQUEST['country'];}
+		*/
+		$country=str_replace("'","^",trim($_REQUEST['country'])); 
+		//$country=$_REQUEST['country'];
+	}
+	if(isset($_REQUEST['lat']))
+	{
+		
+		$lat=$_REQUEST['lat'];
+	}
+	if(isset($_REQUEST['longi']))
+	{
+		$longi=$_REQUEST['longi'];
+	}
+	if(isset($_REQUEST['tdsNumber']))
+	{
+		$tdsNumber=$_REQUEST['tdsNumber'];
+	}
+	if(isset($_REQUEST['comment']))
+	{
+		//$comment= stripslashes($_REQUEST['comment']);
+		$comment=str_replace("'","^",trim($_REQUEST['comment'])); 
+	}
+	if(isset($_FILES['placePhoto']['name']))
+	{
+		$placePhoto = $_FILES['placePhoto']['name'];
+	} else if(isset($_REQUEST['placePhoto'])) {
+    	$placePhoto = $_REQUEST['placePhoto'];
+	}
+	if(isset($_REQUEST['status']))
+	{
+		$status = $_REQUEST['status'];
+	}
+	if(isset($_REQUEST['phone']))
+	{
+		$phone = $_REQUEST['phone'];
+	}
+	if(isset($_REQUEST['url']))
+	{
+		$url = $_REQUEST['url'];
+	}
+	
+	$location = "GeomFromText('POINT($lat $longi)')";
+	
+	
+    if(isset($_FILES['placePhoto']['name']))  {
+        $imgName = $_FILES['placePhoto']['name'];
+        $tmpName = $_FILES['placePhoto']['tmp_name'];
+        $ext = strrchr($imgName, ".");
+        $newName = md5(rand() * time()) . $ext;
+	}
+	if($status=='Y')
+	{
+    	if(isset($_FILES['placePhoto']['name']))  {
+    		move_uploaded_file($_FILES['placePhoto']['tmp_name'],'upload_image/'.$newName);
+    		$image = new SimpleImage();
+    		$image->load('upload_image/'.$newName);
+    		$image->resize(320,480);
+    		$image->save('upload_image/thumb/'.$newName);
+        } else if(isset($_REQUEST['placePhoto'])) {
+            
+            
+            $newName = $FsqId . "_" . time() . ".png";
+            $image = base64_to_jpeg( $_REQUEST['placePhoto'], $newName );
+            move_uploaded_file($image,'upload_image/' . $newName);
+            $image = new SimpleImage();
+    		$image->load('upload_image/'.$newName);
+    		$image->resize(320,480);
+    		$image->save('upload_image/thumb/'.$newName);
+        }
+
+		$sql3="INSERT INTO `tbl_place`(
+					`userID`,`placename`, `street`, `state`, `country`, `city`, `address`, `fulladdress`,
+					`lat`, `longi`, `location`,
+					`placePhoto`, `tdsNumber`, `comment`, `phone`,`url`,`FsqId`)
+				VALUES('".$userid."','".$placename."','".$street."','".$state."','".$country."','".$city."','".$address."','".$fulladdress."','".$lat."','".$longi."',".$location.",'".$newName."','".$tdsNumber."','".$comment."','".$phone."','".$url."','".$FsqId."')";
+							//echo($sql3);
+							
+		$result3 = mysqli_query($mysql,$sql3);
+		$affected=mysqli_affected_rows($mysql);
+		
+		if($affected > 0)
+		{
+			$outputjson['Message']="Place added successfully";	
+		}
+		else
+		{
+			$outputjson['Message'] ="Unsuccessfull";
+		}
+	}
+	else
+	{
+		$sql3="INSERT INTO `tbl_place`(
+					`userID`,`placename`, `street`, `state`, `country`, `city`, `address`,`fulladdress`,
+					`lat`, `longi`,
+					`placePhoto`, `tdsNumber`, `comment` `phone`,`url`,`FsqId`)
+				VALUES('".$userid."','".$placename."','".$street."','".$state."','".$country."','".$city."','".$address."','".$fulladdress."','".$lat."','".$longi."'," . $location . ",'','".$tdsNumber."','".$comment."','".$phone."','".$url."','".$FsqId."')";
+		//echo($sql3);
+		$result3 = mysqli_query($mysql,$sql3);
+		$affected=mysqli_affected_rows($mysql);
+		
+		
+		if($affected > 0)
+		{
+			$outputjson['Message'] ="Place added successfully";	
+		}
+		else
+		{
+			$outputjson['Message'] ="Unsuccessfull";
+		}
+		
+	}	
+}
+
+function base64_to_png($base64_string, $output_file) {
+    $ifp = fopen($output_file, "wb"); 
+
+    $data = explode(',', $base64_string);
+
+    fwrite($ifp, base64_decode($data[1])); 
+    fclose($ifp); 
+
+    return $output_file; 
+}
+
+?>
